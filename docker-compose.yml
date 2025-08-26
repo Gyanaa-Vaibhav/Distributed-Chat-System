@@ -14,6 +14,22 @@ services:
     env_file:
       - $FRONTEND_ENV
 
+  db-service:
+    build:
+      context: ./Backend/db-service
+      dockerfile: Dockerfile
+    ports:
+      - $DB_SERVICE_PORT:$DB_SERVICE_PORT
+    volumes:
+      - ./Backend/db-service:/app
+      - ./Backend/services:/services
+      - /app/node_modules
+    container_name: distributed-chat-system-backend-db-service
+    env_file:
+      - $DB_SERVICE_ENV
+    depends_on:
+      - psql-read
+
   api-gateway:
     build:
       context: ./Backend/api-gateway
@@ -22,6 +38,7 @@ services:
       - $API_SERVER_PORT:$API_SERVER_PORT
     volumes:
       - ./Backend/api-gateway:/app
+      - ./Backend/services:/services
       - /app/node_modules
     container_name: distributed-chat-system-backend-api-gateway
     env_file:
@@ -35,6 +52,7 @@ services:
       - $AUTH_SERVICE_PORT:$AUTH_SERVICE_PORT
     volumes:
       - ./Backend/auth-service:/app
+      - ./Backend/services:/services
       - /app/node_modules
     container_name: distributed-chat-system-backend-auth-service
     env_file:
@@ -48,6 +66,7 @@ services:
       - $WS_GATEWAY_PORT
     volumes:
       - ./Backend/ws-gateway:/app
+      - ./Backend/services:/services
       - /app/node_modules
     container_name: distributed-chat-system-backend-ws-gateway-1
     env_file:
@@ -61,6 +80,7 @@ services:
       - $WS_GATEWAY_PORT
     volumes:
       - ./Backend/ws-gateway:/app
+      - ./Backend/services:/services
       - /app/node_modules
     container_name: distributed-chat-system-backend-ws-gateway-2
     env_file:
@@ -80,18 +100,18 @@ services:
   redis-cache:
     image: redis:8.2-alpine
     container_name: distributed-chat-system-redis-cache
-    ports:
-      - $REDIS_CACHE_PORT:6379
+    expose:
+      - 6379
 
   redis-pub-sub:
     image: redis:8.2-alpine
     container_name: distributed-chat-system-redis-pub-sub
-    ports:
-      - $REDIS_PUB_SUB_PORT:6379
+    expose:
+      - 6379
 
-  psql:
+  psql-write:
     image: postgres:15-alpine
-    container_name: distributed-chat-system-psql
+    container_name: distributed-chat-system-psql-write
     restart: unless-stopped
     expose:
       - 5432
@@ -99,8 +119,43 @@ services:
       POSTGRES_USER: $DB_USER
       POSTGRES_PASSWORD: $DB_PASSWORD
       POSTGRES_DB: $DB_NAME
+    command: >
+      postgres -c wal_level=replica
+               -c max_wal_senders=10
+               -c max_replication_slots=10
+               -c listen_addresses='*'
     volumes:
-      - pgData:/var/lib/postgresql/data
+      - pgDataW:/var/lib/postgresql/data
+      - ./init-repl.sh:/docker-entrypoint-initdb.d/init-repl.sh:ro
+
+  psql-read:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    expose:
+      - 5432
+    environment:
+      PGPASSWORD: replpass
+#    command: >
+#      bash -c "
+#        sleep 15 &&
+#        rm -rf /var/lib/postgresql/data/* &&
+#        PGPASSWORD=replpass pg_basebackup -h psql-write -U repl -D /var/lib/postgresql/data -Fp -Xs -P -R &&
+#        exec su-exec postgres postgres
+#      "
+    command: >
+      bash -c "
+        sleep 15 &&
+        rm -rf /var/lib/postgresql/data/* &&
+        su-exec postgres pg_basebackup -h psql-write -U repl -D /var/lib/postgresql/data -Fp -Xs -P -R &&
+        chown -R postgres:postgres /var/lib/postgresql/data &&
+        chmod 700 /var/lib/postgresql/data &&
+        exec su-exec postgres postgres
+      "
+    volumes:
+      - pgDataR:/var/lib/postgresql/data
+    depends_on:
+      - psql-write
 
 volumes:
-  pgData:
+  pgDataW:
+  pgDataR:

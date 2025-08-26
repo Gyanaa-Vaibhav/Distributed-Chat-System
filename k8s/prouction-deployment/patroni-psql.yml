@@ -20,7 +20,7 @@ metadata:
     application: patroni
     cluster-name: *cluster_name
 spec:
-  replicas: 3
+  replicas: 4
   serviceName: *cluster_name
   selector:
     matchLabels:
@@ -32,11 +32,13 @@ spec:
         application: patroni
         cluster-name: *cluster_name
     spec:
+      imagePullSecrets:
+        - name: regcred
       serviceAccountName: patronidemo
       containers:
         - name: *cluster_name
-          image: patroni  # docker build -t patroni .
-          imagePullPolicy: IfNotPresent
+          image: registry.gyanaavaibhav.in/patroni  # docker build -t patroni .
+          imagePullPolicy: Always
           readinessProbe:
             httpGet:
               scheme: HTTP
@@ -132,7 +134,7 @@ subsets: []
 apiVersion: v1
 kind: Service
 metadata:
-  name: &cluster_name patronidemo
+  name: &cluster_name psql-write
   namespace: distributed-chat-system
   labels:
     application: patroni
@@ -147,7 +149,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: patronidemo-repl
+  name: psql-read
   namespace: distributed-chat-system
   labels:
     application: patroni
@@ -289,4 +291,4 @@ subjects:
     name: patronidemo
     # The namespace must be specified explicitly.
     # If deploying to the different namespace you have to change it.
-    namespace: default
+    namespace: distributed-chat-system
