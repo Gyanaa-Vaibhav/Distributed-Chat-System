@@ -1,0 +1,106 @@
+name: distributed-chat-system-dev
+
+services:
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: frontend.Dockerfile
+    ports:
+      - $FRONTEND_PORT:5173
+    volumes:
+      - ./Frontend:/app
+      - /app/node_modules
+    container_name: distributed-chat-system-frontend
+    env_file:
+      - $FRONTEND_ENV
+
+  api-gateway:
+    build:
+      context: ./Backend/api-gateway
+      dockerfile: Dockerfile
+    ports:
+      - $API_SERVER_PORT:$API_SERVER_PORT
+    volumes:
+      - ./Backend/api-gateway:/app
+      - /app/node_modules
+    container_name: distributed-chat-system-backend-api-gateway
+    env_file:
+      - $API_GATEWAY_ENV
+
+  auth-service:
+    build:
+      context: ./Backend/auth-service
+      dockerfile: Dockerfile
+    ports:
+      - $AUTH_SERVICE_PORT:$AUTH_SERVICE_PORT
+    volumes:
+      - ./Backend/auth-service:/app
+      - /app/node_modules
+    container_name: distributed-chat-system-backend-auth-service
+    env_file:
+      - $AUTH_SERVICE_ENV
+
+  ws-gateway-1:
+    build:
+      context: ./Backend/ws-gateway
+      dockerfile: Dockerfile
+    expose:
+      - $WS_GATEWAY_PORT
+    volumes:
+      - ./Backend/ws-gateway:/app
+      - /app/node_modules
+    container_name: distributed-chat-system-backend-ws-gateway-1
+    env_file:
+      - $WS_GATEWAY_ENV
+
+  ws-gateway-2:
+    build:
+      context: ./Backend/ws-gateway
+      dockerfile: Dockerfile
+    expose:
+      - $WS_GATEWAY_PORT
+    volumes:
+      - ./Backend/ws-gateway:/app
+      - /app/node_modules
+    container_name: distributed-chat-system-backend-ws-gateway-2
+    env_file:
+      - $WS_GATEWAY_ENV
+
+  nginx-ws-load-balancer:
+    image: nginx:alpine
+    container_name: distributed-chat-system-nginx-ws
+    volumes:
+      - ./Backend/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "$WS_GATEWAY_PORT:80"
+    depends_on:
+      - ws-gateway-1
+      - ws-gateway-2
+
+  redis-cache:
+    image: redis:8.2-alpine
+    container_name: distributed-chat-system-redis-cache
+    ports:
+      - $REDIS_CACHE_PORT:6379
+
+  redis-pub-sub:
+    image: redis:8.2-alpine
+    container_name: distributed-chat-system-redis-pub-sub
+    ports:
+      - $REDIS_PUB_SUB_PORT:6379
+
+  psql:
+    image: postgres:15-alpine
+    container_name: distributed-chat-system-psql
+    restart: unless-stopped
+    expose:
+      - 5432
+    environment:
+      POSTGRES_USER: $DB_USER
+      POSTGRES_PASSWORD: $DB_PASSWORD
+      POSTGRES_DB: $DB_NAME
+    volumes:
+      - pgData:/var/lib/postgresql/data
+
+volumes:
+  pgData:
