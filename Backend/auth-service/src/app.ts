@@ -6,7 +6,6 @@ dotenv.config();
 
 const __filename = url.fileURLToPath(import.meta.url);
 export const __dirname = path.dirname(__filename);
-
 const app = express();
 const port = Number(process.env.AUTH_SERVICE_PORT) || 3000;
 

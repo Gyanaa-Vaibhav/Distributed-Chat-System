@@ -1,0 +1,41 @@
+name: CI Push
+on:
+#  push:
+#    branches-ignore:
+#      - main
+  workflow_dispatch:
+
+jobs:
+  Build_Image:
+    runs-on: [self-hosted, CI]
+    steps:
+      - name: Pull Code
+        uses: actions/checkout@v4
+
+      - name: Build Image
+        run: docker compose -f docker-compose-test.yml --env-file /env/dcs/.env build
+
+  Linter:
+    runs-on: [self-hosted, CI]
+    needs: Build_Image
+    steps:
+      - name: Start Containers
+        run: docker compose -f docker-compose-test.yml --env-file /env/dcs/.env up -d
+
+      - name: Run Linter
+        run: docker exec -i ipWho_backend_testing sh -c "npm run lint"
+
+  Test:
+    runs-on: [self-hosted, CI]
+    needs: Linter
+    steps:
+      - name: Run Test
+        run: docker exec -i ipWho_backend_testing sh -c "npm run test"
+
+  Clean_Up:
+    runs-on: [self-hosted, CI]
+    needs: Test
+    steps:
+      - name: Stop Containers
+        if: always()
+        run: docker compose -f docker-compose-test.yml --env-file /env/dcs/.env down
