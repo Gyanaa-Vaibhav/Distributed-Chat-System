@@ -18,6 +18,7 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "redis": "^5.8.2",
     "winston": "^3.17.0"
   }
 }
