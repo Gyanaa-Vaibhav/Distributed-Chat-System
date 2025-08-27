@@ -9,9 +9,7 @@ const app = express();
 const port = Number(process.env.WS_GATEWAY_PORT) || 3000;
 const server = http.createServer(app);
 const io = new Server(server,{
-    cors:{
-        // origin:
-    }
+    cors:{}
 })
 
 app.get("/",(req,res)=>{
@@ -25,36 +23,35 @@ function generateRandom8DigitCode() {
 }
 
 const serverIdentifier = generateRandom8DigitCode();
-console.log(serverIdentifier);
 
 io.on("connection", async (socket) => {
     console.log("Connected to the server",socket.id);
 
-    socket.on("message", async (data) => {
-        console.log(data);
-        const { message, room} = data
-        // io.emit("message", data);
-        socket.broadcast.emit(room, message);
-        await pubSub.publish("Messages",JSON.stringify({message:message,sID:serverIdentifier,room:room}));
-    })
+    socket.on("join-room", ({ room }) => {
+        socket.join(room);
+        console.log(`Socket ${socket.id} Joined room ${room}`);
+    });
 
-    socket.on("Test",async (data) => {
-        console.log(data);
-        socket.broadcast.emit("Test",data);
-        await pubSub.publish("Messages",JSON.stringify({message:data,sID:serverIdentifier}));
-    })
+    socket.on("leave-room", ({ room }) => {
+        socket.leave(room);
+        console.log(`Socket ${socket.id} left room ${room}`);
+    });
+
+    socket.on("message", async (data) => {
+        const { message, room } = data;
+        socket.broadcast.emit(room, message);
+        await pubSub.publish(`room:${room}`, JSON.stringify({ message, sID: serverIdentifier, room }));
+    });
 
     socket.on("disconnect", (data) => {
         console.log(data);
     })
 })
 
-await pubSub.subscribe('Messages',(m)=>{
-    console.log(m)
-    const {message,sID,room} = JSON.parse(m);
-    console.log("From Subscribe",message);
-    if(sID !== serverIdentifier) io.emit(room,`${message} FROM Subscribe EVENT`);
-})
+await pubSub.pSubscribe('room:*', (m) => {
+    const { message, sID, room } = JSON.parse(m);
+    if (sID !== serverIdentifier) io.emit(room, message);
+});
 
 server.listen(port, () => {
     console.log("listening on PORT:", port);

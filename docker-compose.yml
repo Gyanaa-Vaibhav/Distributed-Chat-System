@@ -98,6 +98,15 @@ services:
       - ws-gateway-1
       - ws-gateway-2
 
+  services:
+    build:
+      context: ./Backend/services
+      dockerfile: Dockerfile
+    container_name: distributed-chat-system-service
+    volumes:
+      - /app/node_modules
+      - ./Backend/services:/app
+
   redis-cache:
     image: redis:8.2-alpine
     container_name: distributed-chat-system-redis-cache
