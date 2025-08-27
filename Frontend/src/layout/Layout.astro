@@ -1,0 +1,44 @@
+---
+const { title = "Chat App" } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+	</head>
+	<body>
+		<slot />
+	</body>
+</html>
+<style>
+	:root{
+		--Secondary-Color : #27548A;
+		--Primary-Color : #F3F3E0;
+		--Body-Color : #183B4E;
+		--Accent-Color : #c08322;
+		--Accent-Color-2 : #DDA853;
+		--N-BG: #D9E2EC;
+		--N-Cards-BG: #F0F4F8;
+		--N-CTA-BG: #048271;
+		--N-CTA-BG-Hover: #03695C;
+		--N-Body-Color: #334E68;
+		--N-CTA-Color: #FFFFFF;
+		--N-Heading-Color: #102A43;
+	}
+
+	a {
+		text-decoration: none;
+	}
+
+	body{
+		margin: 0;
+		position: relative;
+		background-color: var(--N-BG);
+	}
+
+</style>
