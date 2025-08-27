@@ -1,0 +1,9 @@
+---
+const { room } = Astro.params;
+import Layout from '../../layout/Layout.astro'
+import Chat from "../../components/Chat.tsx"
+---
+
+<Layout title={room}>
+    <Chat room={room!} client:only="react" />
+</Layout>

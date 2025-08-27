@@ -28,6 +28,7 @@ services:
     env_file:
       - $DB_SERVICE_ENV
     depends_on:
+      - psql-write
       - psql-read
 
   api-gateway:
@@ -135,13 +136,6 @@ services:
       - 5432
     environment:
       PGPASSWORD: replpass
-#    command: >
-#      bash -c "
-#        sleep 15 &&
-#        rm -rf /var/lib/postgresql/data/* &&
-#        PGPASSWORD=replpass pg_basebackup -h psql-write -U repl -D /var/lib/postgresql/data -Fp -Xs -P -R &&
-#        exec su-exec postgres postgres
-#      "
     command: >
       bash -c "
         sleep 15 &&
