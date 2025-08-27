@@ -36,6 +36,17 @@ export class PubSubService {
         });
     }
 
+    public async pSubscribe(channel: string, handler: MessageHandler): Promise<void> {
+        if (!this.subClient) await this.init();
+        await this.subClient!.pSubscribe(channel, (message) => {
+            try {
+                handler(message, channel);
+            } catch (err) {
+                logError(`Error handling message on channel ${channel}: ${err}`);
+            }
+        });
+    }
+
     public async unsubscribe(channel: string): Promise<void> {
         if (!this.subClient) return;
         await this.subClient.unsubscribe(channel);

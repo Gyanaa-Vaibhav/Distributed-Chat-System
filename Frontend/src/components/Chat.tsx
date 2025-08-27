@@ -9,14 +9,15 @@ export default function Chat ({room}:Props) {
     const [messages, setMessages] = useState<string[]>([]);
     const [input, setInput] = useState('');
 
-    console.log(room)
     useEffect(() => {
+        socket.emit("join-room", {room})
         socket.on(room, (msg: string) => {
             setMessages(prev => [...prev, msg]);
         });
 
         return () => {
-            socket.off(room); // cleanup on unmount
+            socket.off(room);
+            socket.emit("leave-room", {room})
         };
     }, []);
 
