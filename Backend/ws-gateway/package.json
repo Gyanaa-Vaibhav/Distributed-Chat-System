@@ -6,7 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "compile": "npx tsc --watch",
-    "dev": "concurrently \"npx tsc --watch\" \"node --watch ./dist/app.js\""
+    "dev": "concurrently \"npx tsc --watch\" \"node --watch ./dist/app.js\"",
+    "bundle": "node bundle.js",
+    "build": "npx tsc"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +17,7 @@
   "dependencies": {
     "concurrently": "^9.2.0",
     "dotenv": "^17.2.1",
+    "esbuild": "^0.25.9",
     "express": "^5.1.0",
     "socket.io": "^4.8.1"
   },
