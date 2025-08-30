@@ -20,12 +20,12 @@ The focus is on showcasing production-grade architecture patterns such as **API 
 - [Security Model](#security-model)
 - [Scalability & Resilience](#scalability--resilience)
 - [Observability](#observability)
-- [Limitations & Non-Goals](#limitations--non-goals)
-- [Roadmap](#roadmap)
 - [Tech Stack](#tech-stack)
 - [Project Structure](#project-structure)
 - [Setup & Deployment](#setup--deployment)
 - [License](#license)  
+<!--- [Limitations & Non-Goals](#limitations--non-goals)
+- [Roadmap](#roadmap) -->
 
 ---
 
@@ -574,3 +574,68 @@ All services push **Prometheus** counters/gauges/histograms every **10s** with l
 - **Infra**: pod CPU/mem, restarts, HPA status.
 
 > **Outcome:** Even during rolling updates and auto-scaling, you retain **continuous metrics (via Pushgateway), searchable logs, and end-to-end traces**, enabling fast debugging and clear performance storytelling.
+
+---
+
+## Tech Stack
+
+### Backend
+- **Node.js + TypeScript** — service runtime (API, WS, Auth, DB)
+- **OpenTelemetry** — tracing & context propagation
+- **Prometheus** — metrics collection (via Pushgateway)
+- **Redis** — cache + Pub/Sub broker
+- **PostgreSQL + Patroni** — HA relational database cluster
+
+### Frontend
+- **Astro + React** — minimal UI for auth & chat flows
+
+### Infrastructure
+- **Docker** — containerization for all services
+- **Kubernetes (HPA + probes)** — orchestration & autoscaling
+- **Grafana** — dashboards for metrics & SLOs
+
+---
+
+Perfect 👌 here’s a **clean `Project Structure` section** in Markdown format that highlights the important parts without overwhelming detail:
+
+## Project Structure
+
+```
+├── Backend
+│   ├── api-gateway/         # Entry point for HTTP requests (JWT validation, routing)
+│   ├── auth-service/        # Authentication + JWT issuance/validation
+│   ├── db-service/          # Cache-first DB layer (Redis + PostgreSQL/Patroni)
+│   ├── ws-gateway/          # WebSocket connections + Redis Pub/Sub fan-out
+│   ├── services/            # Shared library (cache, Pub/Sub, logger, utils)
+│   └── nginx.conf           # Reverse proxy config
+│
+├── Frontend/                # Astro + React frontend (chat UI)
+│   ├── src/components/      # Chat UI + WebSocket client
+│   ├── src/pages/           # Routes (index + room views)
+│   └── astro.config.mjs
+│
+├── k8s/                     # Kubernetes manifests
+│   └── prouction-deployment/
+│       ├── namespace.yml
+│       └── patroni-psql.yml
+│
+├── images/                  # Architecture diagrams
+├── docker-compose.yml        # Local multi-service setup
+├── docker-compose-test.yml   # Lightweight test setup
+├── logs/                     # Service logs (gitignored in practice)
+├── init-repl.sh              # Dev utility script
+├── precheck.sh               # Pre-deployment checks
+├── LICENSE
+└── README.md
+```
+---
+
+## Setup & Deployment
+
+Refer to [SETUP.md](./SETUP.md) for detailed **local (Docker Compose)** and **Kubernetes (production)** deployment steps.
+
+---
+
+## License
+
+This project is licensed under the terms of the [MIT License](./LICENSE).
